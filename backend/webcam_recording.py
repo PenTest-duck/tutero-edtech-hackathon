@@ -11,10 +11,48 @@ from dotenv import load_dotenv
 import json
 import base64
 import threading
+import os
+import requests
 
 from save_video import save_video2
 
 load_dotenv()
+headers = {
+   'Authorization': os.environ.get("BLAND_API_KEY"),
+}
+data = {
+  "phone_number": os.environ.get("PHONE_NUMBER"),
+  "from": None,
+  "task": "You're Study Buddy, a study assistant. You notice a student using their phone when they should be studying. Write a message to remind them to stay focused. You should begin with the following words: ",
+  "model": "enhanced",
+  "language": "en",
+  "voice": "nat",
+  "voice_settings": {},
+  "pathway_id": None,
+  "local_dialing": False,
+  "max_duration": 12,
+  "answered_by_enabled": False,
+  "wait_for_greeting": False,
+  "record": False,
+  "amd": False,
+  "interruption_threshold": 100,
+  "voicemail_message": None,
+  "temperature": None,
+  "transfer_phone_number": None,
+  "transfer_list": {},
+  "metadata": None,
+  "pronunciation_guide": [],
+  "start_time": None,
+  "background_track": "none",
+  "request_data": {},
+  "tools": [],
+  "dynamic_data": [],
+  "analysis_preset": None,
+  "analysis_schema": {},
+  "webhook": None,
+  "calendly": {},
+  "timezone": "America/Los_Angeles"
+}
 
 TIME_INTERVAL = 10
 client = Groq()
@@ -94,7 +132,10 @@ def send_to_groq(image: bytes):
     message = response_json.get("message", "")
     print(f"{message=}")
 
-    save_video2(message)
+    # save_video2(message)
+
+    data["task"] += message
+    requests.post('https://api.bland.ai/v1/calls', json=data, headers=headers)
 
 
 def show_webcam():
