@@ -38,7 +38,16 @@ const WebcamFeed = () => {
 
   return (
     <div key={key} className="bg-card text-card-foreground rounded-lg shadow-lg p-4 aspect-video relative">
-      <div className="absolute inset-0 flex items-center justify-center">
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{
+          backgroundImage: "url(static.png)",
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+          maxWidth: "100%",
+        }}
+      >
         <video ref={videoRef} autoPlay playsInline className="w-full h-full" controls>
           <source src="downloaded_video.mp4" type="video/mp4" />
           Your browser does not support the video tag.
