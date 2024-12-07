@@ -1,38 +1,107 @@
 import cv2
 import time
 from groq import Groq
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 import os
 import torch
 import numpy as np
 from pathlib import Path
-from torchvision.models.detection import maskrcnn_resnet50_fpn
-from torchvision import transforms
+from groq import Groq
+from dotenv import load_dotenv
+import json
+import base64
+import threading
 
-model = maskrcnn_resnet50_fpn(pretrained=True)
-print(model)
-model.eval()  # Set the model to evaluation mode
+from save_video import save_video2
 
-# Define a transform to normalize the input image
-transform = transforms.Compose([transforms.ToTensor()])
+load_dotenv()
 
-def detect_phone(prediction):
-    phone_detected = False
-    # Iterate over each detected object in the prediction
-    for i in range(len(prediction[0]['labels'])):
-        label = prediction[0]['labels'][i]
-        confidence = prediction[0]['scores'][i].item()
+TIME_INTERVAL = 10
+client = Groq()
 
-        # Check if the detected object is a phone (class 67 in COCO dataset)
-        if label == 68 and confidence > 0.5:  # Confidence threshold
-            phone_detected = True
-            break
-    return phone_detected
+def send_to_groq(image: bytes):
+    base64_image = base64.b64encode(image).decode("utf-8")
+
+    completion = client.chat.completions.create(
+        model="llama-3.2-11b-vision-preview",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": """
+                            Check whether there is a mobile phone within this photo.
+                            Also provide a description, with the first sentence being what you can see in the photo, and the second being what clothes the person in the photo is wearing.
+
+                            Your result should be in JSON, e.g. {"contains_phone": true, "description": "A person who is using a laptop while holding a phone."}
+                        """
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{base64_image}",
+                        },
+                    }
+                ]
+            },
+        ],
+        temperature=0.1,
+        max_tokens=1024,
+        top_p=1,
+        stream=False,
+        response_format={"type": "json_object"},
+        stop=None,
+    )
+
+    response_json = json.loads(completion.choices[0].message.content)
+    contains_phone = response_json.get("contains_phone", False)
+
+    print(f"Contains phone: {contains_phone}")
+    if not contains_phone:
+        return
+
+    completion = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": f"""
+                            Description of the scenario: {response_json.get("description", "")}
+
+                            You have just found out that a student has been using his phone when he is supposed to be studying.
+                            Write a message to the student to remind him to stay focused, calling the person out by the clothes they are wearing.
+                            It should be a message that can be read out in 5 seconds.
+
+                            Return it in JSON format, e.g. "message": "Hey, guy in the white shirt, put your phone away and focus on your studies!"
+                        """
+                    },
+                ]
+            },
+        ],
+        temperature=0.5,
+        max_tokens=1024,
+        top_p=1,
+        stream=False,
+        response_format={"type": "json_object"},
+        stop=None,
+    )
+
+    response_json = json.loads(completion.choices[0].message.content)
+    message = response_json.get("message", "")
+    print(f"{message=}")
+
+    save_video2(message)
 
 
 def show_webcam():
     # Open the default webcam (0 is the default camera index)
     cap = cv2.VideoCapture(0)
+    timestamp = int(time.time())
+    groq_enabled = False
 
     if not cap.isOpened():
         print("You need to enable the webcam bro!")
@@ -47,25 +116,22 @@ def show_webcam():
             print("Error: Failed to capture frame.")
             break
 
-        # Convert the frame to a tensor
-        image_tensor = transform(frame)
-        image_tensor = image_tensor.unsqueeze(0)  # Add batch dimension
-
-        with torch.no_grad():
-            # Get the model prediction (probabilities for each pixel)
-            prediction = model(image_tensor)
-
-        # Check if a phone is detected
-        phone_detected = detect_phone(prediction)
-
-        # Draw a bounding box or display a message if a phone is detected
-        if phone_detected:
-            cv2.putText(frame, "Phone Detected", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-        else:
-            cv2.putText(frame, "No Phone Detected", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-
         # Display the frame with the message
         cv2.imshow("Webcam Feed with Mask R-CNN", frame)
+
+        current = int(time.time())
+        if groq_enabled and current - timestamp > TIME_INTERVAL:
+            timestamp = current
+            img_encode = cv2.imencode('.png', frame)[1] 
+            data_encode = np.array(img_encode) 
+            byte_encode = data_encode.tobytes() 
+
+            print("Sending to Groq...")
+            threading.Thread(target=send_to_groq, args=(byte_encode,)).start()
+
+        if cv2.waitKey(1) & 0xFF == ord('g'):
+            groq_enabled = not groq_enabled
+            print(f"{groq_enabled=}")
 
         # Break the loop when 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):

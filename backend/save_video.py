@@ -6,7 +6,7 @@ import re
 from create_video import create_video
 import os
 
-def save_video(transcript):
+def save_video2(transcript):
     [video_id, hosted_url] = create_video(transcript)
     headers = {"x-api-key": "4f0cf1d227a2478a89182fde9bddf8d3"}
     url = "https://tavusapi.com/v2/videos/" + video_id
@@ -44,4 +44,4 @@ def save_video(transcript):
     else:
         print("Download URL not found.")
 
-save_video("keep going Freddie, your future self will thank you. we're having so much fun at this hackathon today")
+# save_video2("keep going Freddie, your future self will thank you. we're having so much fun at this hackathon today")
