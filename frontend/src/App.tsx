@@ -1,19 +1,22 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 // import Settings from "./pages/Settings";
-import { TimerProvider } from "./context/TimerContext";
+import { FocusTimerProvider } from "./context/FocusTimerContext";
+import { RestTimerProvider } from "./context/RestTimerContext";
 
 function App() {
   return (
-    <TimerProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* <Route path="/settings" element={<Settings />} /> */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </BrowserRouter>
-    </TimerProvider>
+    <FocusTimerProvider>
+      <RestTimerProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            {/* <Route path="/settings" element={<Settings />} /> */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </BrowserRouter>
+      </RestTimerProvider>
+    </FocusTimerProvider>
   );
 }
 
