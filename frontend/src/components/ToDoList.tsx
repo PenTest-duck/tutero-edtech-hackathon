@@ -2,7 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { getLocalStorage, setLocalStorage } from "@/scripts/store";
-import { FaTrash } from "react-icons/fa";
+import { FaEllipsisV } from "react-icons/fa";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Task {
   id: number;
@@ -13,6 +21,8 @@ interface Task {
 const ToDoList = () => {
   const [tasks, setTasks] = useState<Task[]>(() => getLocalStorage("tasks"));
   const [newTask, setNewTask] = useState("");
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState("");
 
   useEffect(() => {
     setLocalStorage("tasks", tasks);
@@ -37,6 +47,17 @@ const ToDoList = () => {
     setTasks(tasks.filter((task) => task.id !== id));
   };
 
+  const handleEditTask = (id: number, text: string) => {
+    setEditingTaskId(id);
+    setEditingTaskText(text);
+  };
+
+  const handleSaveEdit = () => {
+    setTasks(tasks.map((task) => (task.id === editingTaskId ? { ...task, text: editingTaskText } : task)));
+    setEditingTaskId(null);
+    setEditingTaskText("");
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleAddTask();
@@ -59,22 +80,38 @@ const ToDoList = () => {
         </div>
         <ul className="mt-2 space-y-1">
           {tasks.map((task) => (
-            <li key={task.id} className="flex justify-between space-x-2 group">
-              <div className="flex items-center space-x-2 group">
+            <li key={task.id} className="flex justify-between items-center space-x-2 group">
+              <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
                   checked={task.completed}
                   onChange={() => handleToggleTask(task.id)}
                   className="rounded text-primary focus:ring-primary"
                 />
-                <span className={task.completed ? "line-through" : ""}>{task.text}</span>
+                {editingTaskId === task.id ? (
+                  <input
+                    type="text"
+                    value={editingTaskText}
+                    onChange={(e) => setEditingTaskText(e.target.value)}
+                    onBlur={handleSaveEdit}
+                    onKeyPress={(e) => e.key === "Enter" && handleSaveEdit()}
+                    className="border rounded px-2 py-1"
+                  />
+                ) : (
+                  <span className={task.completed ? "line-through" : ""}>{task.text}</span>
+                )}
               </div>
-              <button
-                onClick={() => handleDeleteTask(task.id)}
-                className="ml-auto hover:text-red-700 opacity-0 group-hover:opacity-100"
-              >
-                <FaTrash />
-              </button>
+              <div className="relative">
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <FaEllipsisV className="opacity-0 group-hover:opacity-100" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => handleEditTask(task.id, task.text)}>Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDeleteTask(task.id)}>Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </li>
           ))}
         </ul>
