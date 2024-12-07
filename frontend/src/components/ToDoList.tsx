@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { getLocalStorage, setLocalStorage } from "@/scripts/store";
 
 interface Task {
   id: number;
@@ -9,8 +10,12 @@ interface Task {
 }
 
 const ToDoList = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<Task[]>(() => getLocalStorage("tasks"));
   const [newTask, setNewTask] = useState("");
+
+  useEffect(() => {
+    setLocalStorage("tasks", tasks);
+  }, [tasks]);
 
   const handleAddTask = () => {
     if (newTask.trim() === "") return;
