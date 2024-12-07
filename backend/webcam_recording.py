@@ -24,7 +24,7 @@ def detect_phone(prediction):
         confidence = prediction[0]['scores'][i].item()
 
         # Check if the detected object is a phone (class 67 in COCO dataset)
-        if label == 1 and confidence > 0.5:  # Confidence threshold
+        if label == 68 and confidence > 0.5:  # Confidence threshold
             phone_detected = True
             break
     return phone_detected
@@ -60,9 +60,9 @@ def show_webcam():
 
         # Draw a bounding box or display a message if a phone is detected
         if phone_detected:
-            cv2.putText(frame, "Person Detected", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+            cv2.putText(frame, "Phone Detected", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
         else:
-            cv2.putText(frame, "No person Detected", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+            cv2.putText(frame, "No Phone Detected", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
 
         # Display the frame with the message
         cv2.imshow("Webcam Feed with Mask R-CNN", frame)
