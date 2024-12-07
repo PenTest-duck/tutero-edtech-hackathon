@@ -3,43 +3,45 @@ import json
 import time
 # from bs4 import BeautifulSoup/
 import re
-from create_video import hosted_url, video_id
+from create_video import create_video
 import os
 
-url = "https://tavusapi.com/v2/videos/" + video_id
+def save_video(transcript):
+    [video_id, hosted_url] = create_video(transcript)
+    headers = {"x-api-key": "4f0cf1d227a2478a89182fde9bddf8d3"}
+    url = "https://tavusapi.com/v2/videos/" + video_id
+    response = requests.request("GET", url, headers=headers)
 
-headers = {"x-api-key": "4f0cf1d227a2478a89182fde9bddf8d3"}
+    while True:
+        response = json.loads(requests.request("GET", url, headers=headers).text)
+        if response["status"] == "ready":
+            break
+        time.sleep(2)
 
-response = requests.request("GET", url, headers=headers)
+    # Step 1: Fetch the webpage
+    tavus_url = hosted_url
+    res = requests.get(tavus_url)
+    res.raise_for_status()  
 
-while True:
-    response = json.loads(requests.request("GET", url, headers=headers).text)
-    if response["status"] == "ready":
-        break
-    time.sleep(2)
+    # Step 2: Parse the HTML
+    html = res.text
 
-# Step 1: Fetch the webpage
-tavus_url = hosted_url
-res = requests.get(tavus_url)
-res.raise_for_status()  
+    match = re.search(r'"download_url":"(https://[^"]+)"', html)
+    if match:
+        download_url = match.group(1)
+        print("Download URL:", download_url)
+        save_folder = "../frontend/public"
+        filename = "downloaded_video.mp4"
+        save_path = os.path.join(save_folder, filename)
+        os.makedirs(save_folder, exist_ok=True)
+        response = requests.get(download_url, stream=True)  # Stream the content for large files
+        response.raise_for_status()
+        with open(save_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):  # Write in chunks of 8 KB
+                file.write(chunk)
 
-# Step 2: Parse the HTML
-html = res.text
+        print(f"Video downloaded and saved to {save_path}.")
+    else:
+        print("Download URL not found.")
 
-match = re.search(r'"download_url":"(https://[^"]+)"', html)
-if match:
-    download_url = match.group(1)
-    print("Download URL:", download_url)
-    save_folder = "../frontend/src/assets/video"
-    filename = "downloaded_video.mp4"
-    save_path = os.path.join(save_folder, filename)
-    os.makedirs(save_folder, exist_ok=True)
-    response = requests.get(download_url, stream=True)  # Stream the content for large files
-    response.raise_for_status()
-    with open(save_path, "wb") as file:
-        for chunk in response.iter_content(chunk_size=8192):  # Write in chunks of 8 KB
-            file.write(chunk)
-
-    print(f"Video downloaded and saved to {save_path}.")
-else:
-    print("Download URL not found.")
+save_video("keep going Freddie, your future self will thank you. we're having so much fun at this hackathon today")
