@@ -69,7 +69,7 @@ def send_to_groq(image: bytes):
                     {
                         "type": "text",
                         "text": """
-                            Check whether there is a mobile phone within this photo.
+                            Check whether there is a mobile phone within this photo (boolean: true/false).
                             Also provide a description, with the first sentence being what you can see in the photo, and the second being what clothes the person in the photo is wearing.
 
                             Your result should be in JSON, e.g. {"contains_phone": true, "description": "A person who is using a laptop while holding a phone."}
@@ -135,7 +135,8 @@ def send_to_groq(image: bytes):
     # save_video2(message)
 
     data["task"] += message
-    requests.post('https://api.bland.ai/v1/calls', json=data, headers=headers)
+    response = requests.post('https://api.bland.ai/v1/calls', json=data, headers=headers)
+    print(response)
 
 
 def show_webcam():
