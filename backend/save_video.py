@@ -1,9 +1,10 @@
 import requests
 import json
 import time
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup/
 import re
 from create_video import hosted_url, video_id
+import os
 
 url = "https://tavusapi.com/v2/videos/" + video_id
 
@@ -29,6 +30,16 @@ match = re.search(r'"download_url":"(https://[^"]+)"', html)
 if match:
     download_url = match.group(1)
     print("Download URL:", download_url)
-    
+    save_folder = "../frontend/src/assets/video"
+    filename = "downloaded_video.mp4"
+    save_path = os.path.join(save_folder, filename)
+    os.makedirs(save_folder, exist_ok=True)
+    response = requests.get(download_url, stream=True)  # Stream the content for large files
+    response.raise_for_status()
+    with open(save_path, "wb") as file:
+        for chunk in response.iter_content(chunk_size=8192):  # Write in chunks of 8 KB
+            file.write(chunk)
+
+    print(f"Video downloaded and saved to {save_path}.")
 else:
     print("Download URL not found.")
