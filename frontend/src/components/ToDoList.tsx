@@ -7,8 +7,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -23,6 +21,7 @@ const ToDoList = () => {
   const [newTask, setNewTask] = useState("");
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
   const [editingTaskText, setEditingTaskText] = useState("");
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
 
   useEffect(() => {
     setLocalStorage("tasks", tasks);
@@ -102,9 +101,13 @@ const ToDoList = () => {
                 )}
               </div>
               <div className="relative">
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <FaEllipsisV className="opacity-0 group-hover:opacity-100" />
+                <DropdownMenu onOpenChange={(open) => setOpenDropdownId(open ? task.id : null)}>
+                  <DropdownMenuTrigger className="focus:outline-none">
+                    <FaEllipsisV
+                      className={`transition-opacity ${
+                        openDropdownId === task.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      }`}
+                    />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => handleEditTask(task.id, task.text)}>Edit</DropdownMenuItem>
