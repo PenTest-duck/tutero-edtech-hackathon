@@ -3,13 +3,9 @@ import time
 from groq import Groq
 from dotenv import load_dotenv, find_dotenv
 import os
-
-load_dotenv()
-
-
-GROQ_API_URL = os.getenv("GROQ_API_URL")
-GROQ_MODEL_ID = os.getenv("GROQ_MODEL_ID")
-API_KEY = os.getenv("API_KEY")
+import torch
+import numpy as np
+from pathlib import Path
 
 def show_webcam():
     # Open the default webcam (0 is the default camera index)
@@ -31,7 +27,6 @@ def show_webcam():
             break
 
         cv2.imshow("Webcam Feed", frame)
-        time.sleep(2)
 
         # Break the loop when 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
