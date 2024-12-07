@@ -30,7 +30,7 @@ def save_video(transcript):
     if match:
         download_url = match.group(1)
         print("Download URL:", download_url)
-        save_folder = "../frontend/src/assets/video"
+        save_folder = "../frontend/public"
         filename = "downloaded_video.mp4"
         save_path = os.path.join(save_folder, filename)
         os.makedirs(save_folder, exist_ok=True)
