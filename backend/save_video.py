@@ -5,10 +5,11 @@ import time
 import re
 from create_video import create_video
 import os
+import env
 
 def save_video2(transcript):
     [video_id, hosted_url] = create_video(transcript)
-    headers = {"x-api-key": "4f0cf1d227a2478a89182fde9bddf8d3"}
+    headers = {"x-api-key": env.TAVUS_API_KEY}
     url = "https://tavusapi.com/v2/videos/" + video_id
     response = requests.request("GET", url, headers=headers)
 
